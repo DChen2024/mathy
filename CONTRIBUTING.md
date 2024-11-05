@@ -5,7 +5,8 @@ any form of contribution. Besides writing and maintaining code,
 you can also improve documentation, report a bug, or request a feature.
 Please be sure to help us maintain a welcoming and friendly environment.
 
-If you have any questions or comments, feel free to reach out to @shine#1674 on Discord.
+If you have any questions or comments, feel free to reach out to
+@shine#1674 on Discord.
 
 ## Pull requests
 

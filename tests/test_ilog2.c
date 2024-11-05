@@ -74,9 +74,9 @@ int8_t ilog2_binary2(uint64_t n) {
 int main() {
     srand(time(NULL));
     clock_t start, end;
-    double f;
+    double duration;
     const int n = 100000000;
-    volatile uint32_t x;
+    volatile uint8_t x;
 
     uint64_t* arr = (uint64_t*)malloc(n*sizeof(uint64_t));
     if (arr == NULL)
@@ -93,48 +93,48 @@ int main() {
     for (int i = 0; i < n; ++i)
         x = ilog2_countlz(arr[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Countlz ilog2 took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Countlz ilog2 took %f seconds\n", duration);
 
     // ilog2f and ilog2 are roughly similar
     start = clock();
     for (int i = 0; i < n; ++i)
         x = ilog2_binaryf(arr[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Binaryf ilog2 took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Binaryf ilog2 took %f seconds\n", duration);
 
     // ilog2 and ilog2f are roughly similar
     start = clock();
     for (int i = 0; i < n; ++i)
         x = ilog2_binaryd(arr[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Binaryd ilog2 took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Binaryd ilog2 took %f seconds\n", duration);
 
     // ilog2l slower than ilog2f and ilog2
     start = clock();
     for (int i = 0; i < n; ++i)
         x = ilog2_binaryl(arr[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Binaryl ilog2 took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Binaryl ilog2 took %f seconds\n", duration);
 
     // Bitwise and ilog2l are roughly similar
     start = clock();
     for (int i = 0; i < n; ++i)
         x = ilog2_bitwise(arr[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Bitwise ilog2 took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Bitwise ilog2 took %f seconds\n", duration);
 
     // Hybrid implementation performs well
     start = clock();
     for (int i = 0; i < n; ++i)
         x = ilog2_binary2(arr[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Binary2 ilog2 took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Binary2 ilog2 took %f seconds\n", duration);
 
     free(arr);
 

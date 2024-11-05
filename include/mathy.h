@@ -38,10 +38,10 @@ extern const uint16_t MATHY_VERSION;
  * 
  * @return  The integer base-2 logarithm of `n`. If `n == 0`, returns `-1`.
  * 
- * @warning Passing a negative signed integer may yield unexpected results
+ * @warning Passing a negative signed integer might yield unexpected results
  *          due to implicit conversion.
  * 
- * @note    This function is always accurate, whereas `ilogb` may suffer
+ * @note    This function is always accurate, whereas `ilogb` might suffer
  *          from floating-point inaccuracies.
  */
 MATHY_API int8_t ilog2(uint64_t n);
@@ -53,10 +53,10 @@ MATHY_API int8_t ilog2(uint64_t n);
  * 
  * @return  The integer square root of `n`.
  * 
- * @warning Passing a negative signed integer may yield unexpected results
+ * @warning Passing a negative signed integer might yield unexpected results
  *          due to implicit conversion.
  * 
- * @note    This function is always accurate, whereas `(int)sqrt` may suffer
+ * @note    This function is always accurate, whereas `(int)sqrt` might suffer
  *          from floating-point inaccuracies.
  */
 MATHY_API uint32_t isqrt(uint64_t n);
@@ -68,16 +68,16 @@ MATHY_API uint32_t isqrt(uint64_t n);
  * 
  * @return  The integer cube root of `n`.
  * 
- * @warning Passing a negative signed integer may yield unexpected results
+ * @warning Passing a negative signed integer might yield unexpected results
  *          due to implicit conversion.
  * 
- * @note    This function is always accurate, whereas `(int)cbrt` may suffer
+ * @note    This function is always accurate, whereas `(int)cbrt` might suffer
  *          from floating-point inaccuracies.
  */
 MATHY_API uint32_t icbrt(uint64_t n);
 
 /**
- * @brief   Calculate the greatest common denominator of two numbers.
+ * @brief   Calculate the greatest common denominator (GCD) of two numbers.
  * 
  * @param   a, b Integer value
  * 
@@ -90,7 +90,7 @@ MATHY_API uint32_t icbrt(uint64_t n);
 MATHY_API intmax_t gcd(intmax_t a, intmax_t b);
 
 /**
- * @brief   Calculate the least common multiple of two numbers.
+ * @brief   Calculate the least common multiple (LCM) of two numbers.
  * 
  * @param   a, b Integer value
  * 
@@ -108,7 +108,7 @@ MATHY_API intmax_t lcm(intmax_t a, intmax_t b);
  * 
  * @return  Whether `n` is prime.
  * 
- * @warning Passing a negative signed integer may yield unexpected results
+ * @warning Passing a negative signed integer might yield unexpected results
  *          due to implicit conversion.
  */
 MATHY_API bool prime(uint64_t n);
@@ -124,10 +124,10 @@ MATHY_API bool prime(uint64_t n);
  *          If the roots are real, the roots are sorted with `x1 <= x2`.
  *          Otherwise, `x1` is the real part and `x2` is the imaginary part.
  * 
- * @warning Passing a non-finite value to `a`, `b`, or `c` may yield
+ * @warning Passing a non-finite value to `a`, `b`, or `c` might yield
  *          unexpected results.
  * 
- *          Passing `0` to `a` may yield unexpected results.
+ *          Passing `0` to `a` might yield unexpected results.
  * 
  *          Passing `NULL` to `x1` or `x2` will result in undefined behavior.
  */
@@ -175,7 +175,7 @@ MATHY_API long double lerpl(long double a, long double b, long double t);
  * 
  * @return  The factorial of `n`.
  * 
- * @warning Passing a negative signed integer may yield unexpected results
+ * @warning Passing a negative signed integer might yield unexpected results
  *          due to implicit conversion.
  * 
  *          This function is only accurate if the result is within the range
@@ -194,7 +194,7 @@ MATHY_API uintmax_t factorial(uint8_t n);
  * @return  The number of ways to arrange `k` items from `n` items
  *          without repetition and with order. If `k > n`, returns `0`.
  * 
- * @warning Passing a negative signed integer to `n` or `k` may yield
+ * @warning Passing a negative signed integer to `n` or `k` might yield
  *          unexpected results due to implicit conversion.
  * 
  *          This function is only accurate if the result is within the range
@@ -215,11 +215,11 @@ MATHY_API uintmax_t permutation(uint8_t n, uint8_t k);
  * @return  The number of ways to arrange `k` items from `n` items
  *          without repetition and without order. If `k > n`, returns `0`.
  * 
- * @warning Passing a negative signed integer to `n` or `k` may yield
+ * @warning Passing a negative signed integer to `n` or `k` might yield
  *          unexpected results due to implicit conversion.
  * 
- *          This function is only accurate if the result is within the range
- *          of `uintmax_t`.
+ *          This function might not be accurate for large values of `n`,
+ *          even if the result is within the range of `uintmax_t`.
  * 
  *            - For `uint64_t`, this function is always accurate if `n <= 62`.
  */
@@ -235,11 +235,10 @@ MATHY_API uintmax_t combination(uint8_t n, uint8_t k);
  * 
  * @return  The relative likelihood the random variable will take on the value
  *          of `k`. If `p` is outside the range `[0.0, 1.0]`, returns `nan`.
+ *          Otherwise, the value returned is within the range `[0.0, 1.0]`.
  * 
- * @warning Passing a negative signed integer to `n` or `k` may yield
+ * @warning Passing a negative signed integer to `n` or `k` might yield
  *          unexpected results due to implicit conversion.
- * 
- *          This function may not be accurate for large values of `n`.
  * 
  * @note    If `n` is large, consider approximating the binomial distribution
  *          as a normal distribution with mean `mu = n*p` and standard
@@ -257,11 +256,10 @@ MATHY_API double binom_pmf(uint8_t k, uint8_t n, double p);
  * 
  * @return  The probability the random variable will be less than or equal
  *          to `k`. If `p` is outside the range `[0.0, 1.0]`, returns `nan`.
+ *          Otherwise, the value returned is within the range `[0.0, 1.0]`.
  * 
- * @warning Passing a negative signed integer to `n` or `k` may yield
+ * @warning Passing a negative signed integer to `n` or `k` might yield
  *          unexpected results due to implicit conversion.
- * 
- *          This function may not be accurate for large values of `n`.
  * 
  * @note    If `n` is large, consider approximating the binomial distribution
  *          as a normal distribution with mean `mu = n*p` and standard
@@ -273,17 +271,13 @@ MATHY_API double binom_cdf(uint8_t k, uint8_t n, double p);
  * @brief   Calculate the probability density function (PDF) of a
  *          normal distribution.
  * 
- *          \f[
- *          f(x)=\frac{1}{\sigma\sqrt{2\pi}}\exp
- *          \left(-\frac{1}{2}\left(\frac{x-\mu}{\sigma}\right)^2\right)
- *          \f]
- * 
  * @param   x Point at which to evaluate the PDF
  * @param   mu Mean of the normal distribution
  * @param   sigma Standard deviation of the normal distribution
  * 
  * @return  The relative likelihood the random variable will be near the
  *          value of `x`. If `sigma <= 0`, returns `nan`.
+ *          Otherwise, the value returned is within the range `[0.0, 1.0]`.
  */
 MATHY_API double normal_pdf(double x, double mu, double sigma);
 
@@ -297,6 +291,7 @@ MATHY_API double normal_pdf(double x, double mu, double sigma);
  * 
  * @return  The probability the random variable will be less than or
  *          equal to `x`. If `sigma <= 0`, returns `nan`.
+ *          Otherwise, the value returned is within the range `[0.0, 1.0]`.
  */
 MATHY_API double normal_cdf(double x, double mu, double sigma);
 

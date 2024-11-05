@@ -25,15 +25,20 @@
 
 #define MATHY_VERSION_MAJOR 1
 #define MATHY_VERSION_MINOR 0
-#define MATHY_VERSION_PATCH 0
+#define MATHY_VERSION_PATCH 1
 // Encodes version information
 const uint16_t MATHY_VERSION = MATHY_VERSION_MAJOR<<12 |
     MATHY_VERSION_MINOR<<8 | MATHY_VERSION_PATCH<<4;
+
+#define abs(n) (n)<0 ? -(n) : (n)
+#define min(a,b) (a)<(b) ? (a) : (b)
+#define max(a,b) (a)>(b) ? (a) : (b)
 
 // Calculate the integer base 2 logarithm of a number, rounded down.
 int8_t ilog2(uint64_t n) {
     if (n == 0)
         return -1;
+    // Compiler intrinsics
 #if __GNUC__ // GCC or Clang
     return __builtin_clzll(n)^0x3F;
 #elif _MSC_VER // MSVC
@@ -62,25 +67,25 @@ uint32_t isqrt(uint64_t n) {
     return (uint32_t)sqrtl(n);
 #else // MSVC
     // for MSVC, double == long double
-    // time complexity O(log(n))
-    // Newton's method
-    uint64_t x0 = (uint64_t)1<<(ilog2(n)/2+1);
-    uint32_t x1 = (x0+n/x0)/2;
-    while (x1 < x0) {
-        x0 = x1;
-        x1 = (x0+n/x0)/2;
+    // CPython implementation
+    // see https://github.com/python/cpython/blob/main/Modules/mathmodule.c
+    uint64_t a = 1;
+    for (int8_t c = ilog2(n)/2, s = ilog2(c), d = 0, e; s >= 0; --s) {
+        e = d;
+        d = c>>s;
+        a = (a<<d-e-1)+(n>>2*c-e-d+1)/a;
     }
-    return (uint32_t)x0;
+    return a>>32 ? UINT32_MAX : (uint32_t)(a-(a*a>n));
 #endif
 }
 
 // Calculate the integer cube root of a number, rounded down.
 uint32_t icbrt(uint64_t n) {
-    // time complexity O(log(n))
-    // Newton's method
-    if (n == 0) 
+    // avoid division by zero
+    if (n == 0)
         return 0;
-    uint32_t x0 = (uint32_t)1<<(ilog2(n)/3+1);
+    // Newton's method
+    uint64_t x0 = (uint32_t)1<<(ilog2(n)/3+1);
     uint64_t x1 = (2*x0+n/(x0*x0))/3;
     while (x1 < x0) {
         x0 = x1;
@@ -91,23 +96,21 @@ uint32_t icbrt(uint64_t n) {
 
 // Calculate the greatest common denominator of two numbers.
 intmax_t gcd(intmax_t a, intmax_t b) {
-    // time complexity O(log(min(a,b)))
     // Euclid's algorithm
-    while (b) {
+    while (b != 0) { // a, b = b, a%b
         intmax_t temp = b;
         b = a%b;
         a = temp;
     }
-    return a<0 ? -a : a; // return abs(a)
+    return abs(a);
 }
 
 // Calculate the least common multiple of two numbers.
 intmax_t lcm(intmax_t a, intmax_t b) {
-    // accurate if in range of intmax_t
     if ((a|b) == 0) // if (a == 0 && b == 0)
         return 0; // avoid undefined behavior, gcd(a, b) will return 0
     a *= b/gcd(a, b); // limit overflow
-    return a<0 ? -a : a; // return abs(a)
+    return abs(a);
 }
 
 // Check if a number is prime.
@@ -119,7 +122,6 @@ bool prime(uint64_t n) {
         return true;
     if (n%2 == 0 || n%3 == 0)
         return false;
-    // time complexity O(sqrt(n))
     // prime numbers greater than 3 are of the form 6k +- 1
     for (uint64_t i = 5, stop = isqrt(n); i <= stop; i += 6)
         if (n%i == 0 || n%(i+2) == 0)
@@ -204,9 +206,6 @@ long double lerpl(long double a, long double b, long double t) {
 
 // Calculate the factorial of a number.
 uintmax_t factorial(uint8_t n) {
-    // time complexity O(n)
-    // accurate if in range of uintmax_t
-    // uint64_t can store up to 20!
     uintmax_t prod = 1;
     for (uint8_t i = n; i; --i)
         prod *= i;
@@ -217,9 +216,6 @@ uintmax_t factorial(uint8_t n) {
 uintmax_t permutation(uint8_t n, uint8_t k) {
     if (k > n)
         return 0;
-    // time complexity O(k)
-    // accurate if in range of uintmax_t
-    // uint64_t accurate if (n <= 20 || k <= 8)
     uintmax_t prod = 1;
     for (uint8_t i = k; i; --n, --i)
         prod *= n;
@@ -230,11 +226,7 @@ uintmax_t permutation(uint8_t n, uint8_t k) {
 uintmax_t combination(uint8_t n, uint8_t k) {
     if (k > n)
         return 0;
-    if (n-k < k) // nCr = nCn-r
-        k = n-k;
-    // time complexity O(k)
-    // accurate if in range of uintmax_t
-    // uint64_t accurate if (n <= 62 || k <= 10)
+    k = min(k, n-k); // nCr = nCn-r
     uintmax_t prod = 1;
     for (uint8_t i = 1; i <= k; --n, ++i)
         prod = prod*n/i; // limit overflow
@@ -243,25 +235,33 @@ uintmax_t combination(uint8_t n, uint8_t k) {
 
 // Calculate the probability mass function of a binomial distribution.
 double binom_pmf(uint8_t k, uint8_t n, double p) {
-    // accuracy depends on nCr(n, k)
     // returns nan for invalid input
     // signbit(p) catches p = -0.0, !(p <= 1) catches p = nan("")
     if (signbit(p) || !(p <= 1)) // if (p < 0 || p > 1)
         return nan("");
-    return combination(n, k)*pow(p, k)*pow(1-p, n-k); // pow(0, 0) returns 1
+    if (k > n)
+        return 0;
+    long double prod = 1; // reduce losses due to intermediate rounding
+    for (uint8_t i = 1; i <= min(k, n-k); ++i) // nCr = nCn-r
+        prod *= (long double)(n-k+i)/i;
+    return (double)(prod*pow(p, k)*pow(1-p, n-k)); // pow(0, 0) returns 1
 }
 
 // Calculate the cumulative density function of a binomial distribution.
 double binom_cdf(uint8_t k, uint8_t n, double p) {
-    // accuracy depends on nCr(n, k)
     // returns nan for invalid input
     // signbit(p) catches p = -0.0, !(p <= 1) catches p = nan("")
     if (signbit(p) || !(p <= 1)) // if (p < 0 || p > 1)
         return nan("");
-    double x = 0;
-    for (int16_t i = 0; i <= k; ++i)
-        x += combination(n, i)*pow(p, i)*pow(1-p, n-i); // pow(0, 0) returns 1
-    return x;
+    if (k >= n)
+        return 1;
+    long double prod = 1;
+    long double x = prod*pow(p, 0)*pow(1-p, n-0);
+    for (uint8_t i = 1; i <= k; ++i) {
+        prod *= (long double)(n+1-i)/i;
+        x += prod*pow(p, i)*pow(1-p, n-i);
+    }
+    return (double)fmin(x, 1); // clip sum to 1
 }
 
 // Calculate the probability density function of a normal distribution.
@@ -314,7 +314,7 @@ double normal_inv_cdf(double p, double mu, double sigma) {
         x = num/den;
         return mu+(x*sigma);
     }
-    r = (q <= 0) ? p : (1-p);
+    r = q<=0 ? p : 1-p;
     r = sqrt(-log(r));
     if (r <= 5.0) {
         // use the following polynomial fit far from the mean

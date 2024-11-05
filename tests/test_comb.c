@@ -60,9 +60,9 @@ uint64_t comb_pascals(uint8_t n, uint8_t k) {
 int main() {
     srand(time(NULL));
     clock_t start, end;
-    double f;
+    double duration;
     const int n = 100000000;
-    volatile uint32_t x;
+    volatile uint64_t x;
 
 #ifdef __GNUC__
     // For uint64_t, limit of combination accuracy
@@ -106,16 +106,16 @@ int main() {
     for (int i = 0; i < n; ++i)
         x = comb_product(arr1[i], arr2[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Product comb took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Product comb took %f seconds\n", duration);
 
     // Pascals is slower
     start = clock();
     for (int i = 0; i < n; ++i)
         x = comb_pascals(arr1[i], arr2[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Pascals comb took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Pascals comb took %f seconds\n", duration);
 
     free(arr1);
     free(arr2);

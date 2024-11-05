@@ -22,11 +22,11 @@ Calculate the integer base-2 logarithm of a number, rounded down.
 The integer base-2 logarithm of `n`. If `n == 0`, returns `-1`.
 
 ### Warning
-Passing a negative signed integer may yield unexpected results due to
+Passing a negative signed integer might yield unexpected results due to
 implicit conversion.
 
 ### Note
-This function is always accurate, whereas `ilogb` may suffer from
+This function is always accurate, whereas `ilogb` might suffer from
 floating-point inaccuracies.
 
 ---
@@ -44,11 +44,11 @@ Calculate the integer square root of a number, rounded down.
 The integer square root of `n`.
 
 ### Warning
-Passing a negative signed integer may yield unexpected results due to
+Passing a negative signed integer might yield unexpected results due to
 implicit conversion.
 
 ### Note
-This function is always accurate, whereas `(int)sqrt` may suffer from
+This function is always accurate, whereas `(int)sqrt` might suffer from
 floating-point inaccuracies.
 
 ---
@@ -66,11 +66,11 @@ Calculate the integer cube root of a number, rounded down.
 The integer cube root of `n`.
 
 ### Warning
-Passing a negative signed integer may yield unexpected results due to
+Passing a negative signed integer might yield unexpected results due to
 implicit conversion.
 
 ### Note
-This function is always accurate, whereas `(int)cbrt` may suffer from
+This function is always accurate, whereas `(int)cbrt` might suffer from
 floating-point inaccuracies.
 
 ---
@@ -79,7 +79,7 @@ floating-point inaccuracies.
 intmax_t gcd(intmax_t a, intmax_t b);
 ```
 
-Calculate the greatest common denominator of two numbers.
+Calculate the greatest common denominator (GCD) of two numbers.
 
 ### Parameters
 `a, b` Integer value
@@ -97,7 +97,7 @@ This function is only accurate if the result is within the range of `intmax_t`.
 intmax_t lcm(intmax_t a, intmax_t b);
 ```
 
-Calculate the least common multiple of two numbers.
+Calculate the least common multiple (LCM) of two numbers.
 
 ### Parameters
 `a, b` Integer value
@@ -124,7 +124,7 @@ Check whether a number is prime.
 Whether `n` is prime.
 
 ### Warning
-Passing a negative signed integer may yield unexpected results due to
+Passing a negative signed integer might yield unexpected results due to
 implicit conversion.
 
 ---
@@ -151,9 +151,9 @@ If the roots are real, the roots are sorted with `x1 <= x2`.
 Otherwise, `x1` is the real part and `x2` is the imaginary part.
 
 ### Warning
-Passing a non-finite value to `a`, `b`, or `c` may yield unexpected results.
+Passing a non-finite value to `a`, `b`, or `c` might yield unexpected results.
 
-Passing `0` to `a` may yield unexpected results.
+Passing `0` to `a` might yield unexpected results.
 
 Passing `NULL` to `x1` or `x2` will result in undefined behavior.
 
@@ -204,7 +204,7 @@ Calculate the factorial of a number.
 The factorial of `n`.
 
 ### Warning
-Passing a negative signed integer may yield unexpected results due to
+Passing a negative signed integer might yield unexpected results due to
 implicit conversion.
 
 This function is only accurate if the result is within the range
@@ -228,7 +228,7 @@ The number of ways to arrange `k` items from `n` items without repetition
 and with order. If `k > n`, returns `0`.
 
 ### Warning
-Passing a negative signed integer to `n` or `k` may yield unexpected results
+Passing a negative signed integer to `n` or `k` might yield unexpected results
 due to implicit conversion.
 
 This function is only accurate if the result is within the range
@@ -254,11 +254,11 @@ The number of ways to arrange `k` items from `n` items without repetition
 and without order. If `k > n`, returns `0`.
 
 ### Warning
-Passing a negative signed integer to `n` or `k` may yield unexpected results
+Passing a negative signed integer to `n` or `k` might yield unexpected results
 due to implicit conversion.
 
-This function may not be accurate for large values of `n`, even if the result
-is within the range of `uintmax_t`.
+This function might not be accurate for large values of `n`,
+even if the result is within the range of `uintmax_t`.
 - For `uint64_t`, this function is always accurate if `n <= 62`.
 
 ---
@@ -276,13 +276,12 @@ Calculate the probability mass function (PMF) of a binomial distribution.
 
 ### Returns
 The relative likelihood the random variable will take on the value of `k`.
-If `p` is outside the range `[0.0, 1.0]`, returns `nan`.
+If `p` is outside the range `[0.0, 1.0]`, returns `nan`. Otherwise, the value
+returned is within the range `[0.0, 1.0]`.
 
 ### Warning
-Passing a negative signed integer to `n` or `k` may yield unexpected results
+Passing a negative signed integer to `n` or `k` might yield unexpected results
 due to implicit conversion.
-
-This function may not be accurate for large values of `n`.
 
 ### Note
 If `n` is large, consider approximating the binomial distribution as a
@@ -304,13 +303,12 @@ Calculate the cumulative density function (CDF) of a binomial distribution.
 
 ### Returns
 The relative likelihood the random variable will less than or equal to `k`.
-If `p` is outside the range `[0.0, 1.0]`, returns `nan`.  
+If `p` is outside the range `[0.0, 1.0]`, returns `nan`. Otherwise, the value
+returned is within the range `[0.0, 1.0]`.
 
 ### Warning
-Passing a negative signed integer to `n` or `k` may yield unexpected results
+Passing a negative signed integer to `n` or `k` might yield unexpected results
 due to implicit conversion.
-
-This function may not be accurate for large values of `n`.
 
 ### Note
 If `n` is large, consider approximating the binomial distribution as a
@@ -323,7 +321,7 @@ normal distribution with mean `mu = n*p` and standard deviation
 double normal_pdf(double x, double mu, double sigma);
 ```
 
-Calculate the probability density function (PDf) of a normal distribution.
+Calculate the probability density function (PDF) of a normal distribution.
 
 ### Parameters
 `x` Point at which to evaluate the PDF  
@@ -332,7 +330,8 @@ Calculate the probability density function (PDf) of a normal distribution.
 
 ### Returns
 The relative likelihood the random variable will be near the value of `x`.
-If `sigma <= 0`, returns `nan`.
+If `sigma <= 0`, returns `nan`. Otherwise, the value returned is within the
+range `[0.0, 1.0]`.
 
 ---
 
@@ -349,7 +348,8 @@ Calculate the cumulative density function (CDF) of a normal distribution.
 
 ### Returns
 The probability the random variable will be less than or equal to `x`.
-If `sigma <= 0`, returns `nan`.
+If `sigma <= 0`, returns `nan`. Otherwise, the value returned is within the
+range `[0.0, 1.0]`.
 
 ---
 

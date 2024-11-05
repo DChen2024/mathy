@@ -46,7 +46,7 @@ uint32_t icbrt_bitwise(uint64_t n) {
 uint32_t icbrt_newtons(uint64_t n) {
     if (n == 0) 
         return 0;
-    uint32_t x0 = (uint32_t)1<<(ilog2(n)/3+1);
+    uint64_t x0 = (uint32_t)1<<(ilog2(n)/3+1);
     uint64_t x1 = (2*x0+n/(x0*x0))/3;
     while (x1 < x0) {
         x0 = x1;
@@ -58,7 +58,7 @@ uint32_t icbrt_newtons(uint64_t n) {
 int main() {
     srand(time(NULL));
     clock_t start, end;
-    double f;
+    double duration;
     const int n = 100000000;
     volatile uint32_t x;
 
@@ -91,40 +91,40 @@ int main() {
     for (int i = 0; i < n; ++i)
         x = icbrt_binaryf(arr[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Binaryf icbrt took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Binaryf icbrt took %f seconds\n", duration);
 
     // cbrt slightly slower than cbrtf
     start = clock();
     for (int i = 0; i < n; ++i)
         x = icbrt_binaryd(arr[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Binaryd icbrt took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Binaryd icbrt took %f seconds\n", duration);
 
     // cbrtl slower than cbrtf and cbrt
     start = clock();
     for (int i = 0; i < n; ++i)
         x = icbrt_binaryl(arr[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Binaryl icbrt took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Binaryl icbrt took %f seconds\n", duration);
 
     // Bitwise is faster than Newtons
     start = clock();
     for (int i = 0; i < n; ++i)
         x = icbrt_bitwise(arr[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Bitwise icbrt took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Bitwise icbrt took %f seconds\n", duration);
 
     // Newtons is slower than bitwise
     start = clock();
     for (int i = 0; i < n; ++i)
         x = icbrt_newtons(arr[i]);
     end = clock();
-    f = (double)(end-start)/CLOCKS_PER_SEC;
-    printf("Newtons icbrt took %f seconds\n", f);
+    duration = (double)(end-start)/CLOCKS_PER_SEC;
+    printf("Newtons icbrt took %f seconds\n", duration);
 
     return 0;
 }
