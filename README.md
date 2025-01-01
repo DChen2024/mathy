@@ -1,18 +1,26 @@
 # Mathy
 
 - [Overview](#overview)
+- [Requirements](#requirements)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [Changelog](#changelog)
 
 ## Overview
 
-This project implements some basic math functions not part of the C/C++
-standard library.
+This library implements some basic math utility functions not part of the
+C/C++ standard library.
 
-Made this to become more familiar with GitHub.
+Made this to become more familiar with GitHub. And with creating a library
+in C.
 
 Intended to be a fun pet project. :sweat_smile:
+
+## Requirements
+
+Using Mathy requires the following installed software:
+
+- C compiler that supports at least C99
 
 ## Documentation
 

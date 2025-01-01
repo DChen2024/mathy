@@ -1,18 +1,18 @@
 CC = gcc
-CFLAGS = -std=c99 -I$(INC_DIR) -Wall -Wextra
-CPPFLAGS = -s -O2
-LDFLAGS = -L$(BUILD_DIR)
+CFLAGS = -std=c99 -Wall -Wextra -O2 -s
+CPPFLAGS = -I$(INC_DIR)
+LDFLAGS = -L$(OUT_DIR)
 LDLIBS = -lmathy
 
-BUILD_DIR = ../build/tests
-INC_DIR = ../include
+INC_DIR = ../mathy
+OUT_DIR = ../build
 
 SOURCES = $(wildcard *.c)
-TARGETS = $(patsubst %.c, $(BUILD_DIR)/%.exe, $(SOURCES))
+TARGETS = $(SOURCES:%.c=$(OUT_DIR)/%.exe)
 
 all: $(TARGETS)
 
-$(BUILD_DIR)/%.exe: %.c
+$(OUT_DIR)/%.exe: %.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $< $(LDFLAGS) $(LDLIBS)
 
 clean:
