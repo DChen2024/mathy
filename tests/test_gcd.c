@@ -28,7 +28,7 @@ intmax_t gcd_steins(intmax_t a, intmax_t b) {
     while (((a | b) & 1) == 0) {
         a >>= 1;
         b >>= 1;
-        ++k;
+        k++;
     }
     while ((a & 1) == 0)
         a >>= 1;
@@ -52,13 +52,12 @@ int main() {
     const int n = 50000000;
     volatile intmax_t x;
 
+    // Exponential distribution to represent common values passed to gcd
     intmax_t* arr1 = (intmax_t*)malloc(n*sizeof(intmax_t));
     intmax_t* arr2 = (intmax_t*)malloc(n*sizeof(intmax_t));
     if (arr1 == NULL || arr2 == NULL)
         return 0;
-    for (int i = 0; i < n; ++i) {
-        // Generate exponential distribution
-        // Represent realistic values passed to gcd
+    for (int i = 0; i < n; i++) {
         double random = INTMAX_MAX/2*-log((double)rand()/RAND_MAX);
         arr1[i] = random<=INTMAX_MAX ? (intmax_t)random : INT64_MAX;
         random = INTMAX_MAX/2*-log((double)rand()/RAND_MAX);
@@ -67,7 +66,7 @@ int main() {
 
     // Euclid algorithm is faster than Steins algorithm
     start = clock();
-    for (int i = 0; i < n; ++i)
+    for (int i = 0; i < n; i++)
         x = gcd_euclid(arr1[i], arr2[i]);
     end = clock();
     duration = (double)(end-start)/CLOCKS_PER_SEC;
@@ -75,7 +74,7 @@ int main() {
 
     // Steins algorithm is slower than Euclid algorithm
     start = clock();
-    for (int i = 0; i < n; ++i)
+    for (int i = 0; i < n; i++)
         x = gcd_steins(arr1[i], arr2[i]);
     end = clock();
     duration = (double)(end-start)/CLOCKS_PER_SEC;

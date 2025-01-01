@@ -1,27 +1,23 @@
 CC = gcc
-CFLAGS = -std=c99 -I$(INC_DIR) -Wall -Wextra -DMATHY_EXPORTS
+CFLAGS = -std=c99 -Wall -Wextra -O2 -s
+CPPFLAGS = -DMATHY_EXPORTS
+LDFLAGS = -shared
 
-BUILD_DIR = build
-INC_DIR = include
-SRC_DIR = src
+SRC_DIR = mathy
+OBJ_DIR = build
 
-BUILD_TYPE ?= debug
-ifeq ($(BUILD_TYPE), debug)
-	CPPFLAGS = -g -O0
-else ifeq ($(BUILD_TYPE), release)
-	CPPFLAGS = -s -O2
-else
-	$(error Invalid BUILD_TYPE: must be either 'debug' or 'release')
-endif
-VERSION = v1.0.0
+SRC = $(wildcard $(SRC_DIR)/*.c)
+OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.obj)
 
-SOURCE = $(SRC_DIR)/mathy.c
-TARGET = $(BUILD_DIR)/$(BUILD_TYPE)/$(VERSION)/mathy.dll
+TARGET = build/mathy.dll
 
 all: $(TARGET)
 
-$(TARGET): $(SOURCE)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -shared -o $@ $<
+$(OBJ_DIR)/%.obj: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
+
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
-	$(RM) $(TARGET)
+	$(RM) $(OBJ) $(TARGET)
