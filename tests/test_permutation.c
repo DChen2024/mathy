@@ -10,7 +10,7 @@ __uint128_t permutation(uint8_t n, uint8_t k) {
         prod *= n+1-i;
     return prod;
 }
-#endif
+#endif /* __GNUC__ */
 
 int main() {
 #ifdef __GNUC__
@@ -24,7 +24,7 @@ int main() {
             }
         }
     }
-#endif
+#endif /* __GNUC__ */
 
     return 0;
 }

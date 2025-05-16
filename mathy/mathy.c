@@ -2,27 +2,56 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <float.h>
 
 #ifdef _MSC_VER
-#include <intrin.h>
+#include <intrin.h> /* _BitScanReverse */
 #endif
+
+// IEEE-754 floating-point recommended
 
 #define abs(n) ((n)<0 ? -(n) : (n))
 #define min(a,b) ((b)<(a) ? (b) : (a))
 #define max(a,b) ((b)>(a) ? (b) : (a))
 
-// Computes the integer base 2 logarithm of a number, rounded down.
+// Computes the integer base-2 logarithm of a number, rounded down.
 int8_t mathy_ilog2(uint64_t n) {
     if (n == 0)
         return -1;
     // Compiler intrinsics
 #if __GNUC__ /* GCC or Clang */
-    return __builtin_clzll(n)^0x3F;
+    return (int8_t)__builtin_clzll(n)^0x3F;
 #elif _MSC_VER /* MSVC */
-    return __lzcnt64(n)^0x3F;
-#else
-    #error "Compile using GCC, Clang, or MSVC"
-#endif
+    uint32_t i;
+#if _WIN64 /* 64-bit */
+    _BitScanReverse64((unsigned long*)&i, n);
+    return (int8_t)i;
+#else /* 32-bit */
+    if (n >> 32) {
+        _BitScanReverse((unsigned long*)&i, n>>32);
+        return (int8_t)(i|32);
+    }
+    else {
+        _BitScanReverse((unsigned long*)&i, n);
+        return (int8_t)i;
+    }
+#endif /* Word size */
+#else /* Not GCC, Clang, or MSVC */
+    if (n < ((uint64_t)FLT_RADIX<<FLT_MANT_DIG)-FLT_RADIX/2)
+        return (int8_t)ilogbf(n);
+    if (n < ((uint64_t)FLT_RADIX<<DBL_MANT_DIG)-FLT_RADIX/2)
+        return (int8_t)ilogb(n);
+#if LDBL_MANT_DIG >= 64 /* long double */
+    return (int8_t)ilogbl(n);
+#else /* double */
+    // Binary search for BSR
+    int8_t x = 0;
+    for (uint8_t i = 32; i; i >>= 1)
+        if (n >> i)
+            n >>= i, x |= i;
+    return x;
+#endif /* Extended precision floating-point */
+#endif /* Compiler */
 }
 
 /**
@@ -31,37 +60,26 @@ int8_t mathy_ilog2(uint64_t n) {
  * possible for sqrt to round up when expressed as the nearest representable
  * floating-point value. The values below are numerically determined.
  * 
- * For MSVC, long double is the same as double. This is not enough to cover the
- * range of uint64_t. For this, use the following CPython implementation.
- * http://github.com/python/cpython/blob/main/Modules/mathmodule.c
+ * For the range of uint64_t, (int)sqrt yields either isqrt(n) or isqrt(n)+1.
+ * https://github.com/python/cpython/issues/81138
  */
 
 // Computes the integer square root of a number, rounded down.
 uint32_t mathy_isqrt(uint64_t n) {
-    if (n < 16785407)
+    // Use hardware sqrt instruction if supported for faster computation
+    if (n < (1ULL<<FLT_MANT_DIG/2*2)+(1ULL<<(FLT_MANT_DIG+2)/2)-1)
         return (uint32_t)sqrtf(n);
-    if (n < 4503599761588224)
+    if (n < (1ULL<<DBL_MANT_DIG/2*2)+(1ULL<<(DBL_MANT_DIG+2)/2))
         return (uint32_t)sqrt(n);
-#if __GNUC__ /* GCC or Clang */
-    return (uint32_t)sqrtl(n);
-#else /* MSVC */
-    // CPython implementation
-    uint64_t a = 1;
-    for (int8_t c = (__lzcnt64(n)^0x3F)/2, s = __lzcnt64(c)^0x3F, d = 0, e;
-        s >= 0; s--) {
-        e = d;
-        d = c>>s;
-        a = (a<<d-e-1)+(n>>2*c-d-e+1)/a;
-    }
-    return a>>32 ? UINT32_MAX : (uint32_t)(a-(a*a>n));
-#endif
+    uint64_t a = sqrt(n);
+    return (uint32_t)(a-(a*a-1>=n));
 }
 
 // Computes the integer cube root of a number, rounded down.
 uint32_t mathy_icbrt(uint64_t n) {
     // Bitwise algorithm
     uint32_t x = 0;
-    for (uint32_t i = (uint32_t)1<<(mathy_ilog2(n)/3); i; i >>= 1) {
+    for (uint32_t i = UINT32_C(1)<<(mathy_ilog2(n)/3); i; i >>= 1) {
         uint64_t temp = x|i;
         if (temp*temp*temp <= n)
             x = temp;
@@ -75,15 +93,19 @@ uint32_t mathy_icbrt(uint64_t n) {
  * boundedness, and consistency, as explained in this paper.
  * https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0811r3.html
  * 
- * (1-t)*a+t*b
- * As discussed in the paper, this is not monotonic unless a*b<=0.
- * t<0.5 ? a+t*(b-a) : b-(1-t)*(b-a)
- * This is monotonic, according to https://math.stackexchange.com/q/907327
- * As discussed in the paper, this can overflow.
+ * Approach 1   (1-t)*a+t*b
+ * This does not overflow if a and b have the largest exponent and opposite
+ * signs. As mentioned in the paper, this is not monotonic unless a*b<=0.
  * 
- * Note that the implementation discussed in the paper does not satisfy the
- * standard when one endpoint is zero and t is infinite, as the value returned
- * is NaN whereas it should be infinite.
+ * Approach 2   t<0.5 ? a+t*(b-a) : b-(1-t)*(b-a)
+ * This modified version is monotonic, according to the following discussion.
+ * https://math.stackexchange.com/q/907327
+ * As mentioned in the paper, this can overflow if a and b have the largest
+ * exponent and opposite signs. Note that the modified version is exact at t=1.
+ * 
+ * Note that the implementation in the paper does not satisfy the standard when
+ * one endpoint is zero and t is infinite, as the value returned is NaN whereas
+ * it should be infinite. Therefore, use the following hybrid implementation.
  */
 
 // Computes the linear interpolation between two numbers.
@@ -145,95 +167,103 @@ uintmax_t mathy_combination(uint8_t n, uint8_t k) {
 
 /**
  * The Python 3.12 built-in sum uses Neumaier summation for floats. This is a
- * compensated summation that has improved accuracy over a naive summation.
+ * compensated summation with improved accuracy over a naive summation. Note
+ * that unsafe optimzations such as -funsafe-math-optimizations (enabled by
+ * -ffast-math, in turn enabled by -Ofast) and /fp:fast should be avoided.
+ * https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements
+ * 
  * This is slower than the NumPy np.sum pairwise summation, but faster than the
  * Python math.fsum Shewmuck summation. See the following GitHub issue for how
  * the various implementations perform for a badly conditioned sum.
  * https://github.com/numpy/numpy/issues/8786
  * 
- * Note that unsafe optimizations such as -ffast-math should be avoided.
+ * As C99 does not support lambda functions, use the following workaround using
+ * function macro to follow the don't repeat yourself (DRY) principle.
  */
+
+#define sum(n, lambda, result) do { \
+    double s = 0; \
+    double c = 0; \
+    for (size_t i = 0; i < (n); i++) { \
+        const double x = (lambda(i)); \
+        const double t = s+x; \
+        c += fabs(s)>=fabs(x) ? (s-t)+x : (x-t)+s; \
+        s = t; \
+    } \
+    (result) = s+c; \
+} while (0)
 
 // Computes the sum of an array of numbers.
 double mathy_stats_sum(const double *arr, size_t n) {
-    // Neumaier summation
-    double sum = 0;
-    double c = 0;
-    for (size_t i = 0; i < n; i++) {
-        const double t = sum+arr[i];
-        c += fabs(sum)>=fabs(arr[i]) ? (sum-t)+arr[i] : (arr[i]-t)+sum;
-        sum = t;
-    }
-    return sum+c;
-}
-
-// Computes the dot product of two arrays of numbers.
-static double _mathy_linalg_dot(const double *arr1, const double *arr2,
-    size_t n) {
-    // Neumaier summation
-    double sum = 0;
-    double c = 0;
-    for (size_t i = 0; i < n; i++) {
-        const double p = arr1[i]*arr2[i];
-        const double t = sum+p;
-        c += fabs(sum)>=fabs(p) ? (sum-t)+p : (p-t)+sum;
-        sum = t;
-    }
-    return sum+c;
+    // time complexity O(n)
+    double x;
+#define lambda(i) arr[i]
+    sum(n, lambda, x);
+#undef lambda
+    return x;
 }
 
 // Computes the weighted average of an array of numbers.
 double mathy_stats_average(const double *arr1, const double *arr2, size_t n) {
-    return _mathy_linalg_dot(arr1, arr2, n)/mathy_stats_sum(arr2, n);
+    // time complexity O(n)
+    double x;
+#define lambda(i) arr1[i]*arr2[i]
+    sum(n, lambda, x);
+#undef lambda
+    return x/mathy_stats_sum(arr2, n);
 }
 
 // Computes the mean of an array of numbers.
 double mathy_stats_mean(const double *arr, size_t n) {
+    // time complexity O(n)
     return mathy_stats_sum(arr, n)/n;
 }
 
 // Computes the standard deviation of an array of numbers.
 double mathy_stats_std(const double *arr, size_t n) {
+    // time complexity O(n)
     return sqrt(mathy_stats_var(arr, n)); 
-}
-
-// Computes the sum of product of deviations about the means of two arrays
-// of numbers.
-static double _mathy_stats_cov_impl(const double *arr1, const double *arr2,
-    size_t n, double mean1, double mean2) {
-    // Neumaier summation
-    double sum = 0;
-    double c = 0;
-    for (size_t i = 0; i < n; i++) {
-        const double p = (arr1[i]-mean1)*(arr2[i]-mean2);
-        const double t = sum+p;
-        c += fabs(sum)>=fabs(p) ? (sum-t)+p : (p-t)+sum;
-        sum = t;
-    }
-    return sum+c;
 }
 
 // Computes the variance of an array of numbers.
 double mathy_stats_var(const double *arr, size_t n) {
+    // time complexity O(n)
     const double mean = mathy_stats_mean(arr, n);
-    return _mathy_stats_cov_impl(arr, arr, n, mean, mean)/n;
+    double x;
+#define lambda(i) (arr[i]-mean)*(arr[i]-mean)
+    sum(n, lambda, x);
+#undef lambda
+    return x/n;
 }
 
 // Computes the covariance of two arrays of numbers.
 double mathy_stats_cov(const double *arr1, const double *arr2, size_t n) {
+    // time complexity O(n)
     const double mean1 = mathy_stats_mean(arr1, n);
     const double mean2 = mathy_stats_mean(arr2, n);
-    return _mathy_stats_cov_impl(arr1, arr2, n, mean1, mean2)/n;
+    double x;
+#define lambda(i) (arr1[i]-mean1)*(arr2[i]-mean2)
+    sum(n, lambda, x);
+#undef lambda
+    return x/n;
 }
 
 // Computes the Pearson correlation coefficient of two arrays of numbers.
 double mathy_stats_corr(const double *arr1, const double *arr2, size_t n) {
+    // time complexity O(n)
     const double mean1 = mathy_stats_mean(arr1, n);
     const double mean2 = mathy_stats_mean(arr2, n);
-    const double num = _mathy_stats_cov_impl(arr1, arr2, n, mean1, mean2);
-    const double den = sqrt(_mathy_stats_cov_impl(arr1, arr1, n, mean1, mean1)*
-        _mathy_stats_cov_impl(arr2, arr2, n, mean2, mean2));
-    return num/den;
+    double sxy, sxx, syy;
+#define lambda(i) (arr1[i]-mean1)*(arr2[i]-mean2)
+    sum(n, lambda, sxy);
+#undef lambda
+#define lambda(i) (arr1[i]-mean1)*(arr1[i]-mean1)
+    sum(n, lambda, sxx);
+#undef lambda
+#define lambda(i) (arr2[i]-mean2)*(arr2[i]-mean2)
+    sum(n, lambda, syy);
+#undef lambda
+    return sxy/sqrt(sxx*syy);
 }
 
 // Computes the probability mass function (PMF) of a binomial distribution.

@@ -4,6 +4,8 @@
 #include <math.h>
 #include <time.h>
 
+#define min(a,b) ((b)<(a) ? (b) : (a))
+
 #ifdef __GNUC__
 __uint128_t combination(uint8_t n, uint8_t k) {
     if (k > n)
@@ -15,18 +17,18 @@ __uint128_t combination(uint8_t n, uint8_t k) {
         return (__uint128_t)-1;
     arr[0] = 1;
     for (uint8_t i = n; i; i--)
-        for (uint8_t j = (n+1-i < k ? n+1-i : k); j; j--)
+        for (uint8_t j = min(k, n+1-i); j; j--)
             arr[j] += arr[j-1];
     __uint128_t x = arr[k];
     free(arr);
     return x;
 }
-#endif
+#endif /* __GNUC__ */
 
 // Product implementation
 uint64_t combination_product(uint8_t n, uint8_t k) {
     uint64_t prod = 1;
-    for (uint8_t r = (k < n-k ? k : n-k), i = r; i; i--)
+    for (uint8_t r = min(k, n-k), i = r; i; i--)
         prod = prod*(n+1-i)/(r+1-i); // limit overflow
     return prod;
 }
@@ -42,7 +44,7 @@ uint64_t combination_pascals(uint8_t n, uint8_t k) {
         return UINT64_MAX;
     arr[0] = 1;
     for (uint8_t i = n; i; i--)
-        for (uint8_t j = (n+1-i < k ? n+1-i : k); j; j--)
+        for (uint8_t j = min(k, n+1-i); j; j--)
             arr[j] += arr[j-1];
     uint64_t x = arr[k];
     free(arr);
@@ -67,7 +69,17 @@ int main() {
             }
         }
     }
-#endif
+#endif /* __GNUC__ */
+
+    // Product may not be accurate
+    for (int n = 0; n < 256; n++) {
+        for (int k = 0; k < 256; k++) {
+            if (combination_product(n, k) != combination_pascals(n, k)) {
+                printf("%d\t%d\n", n, k);
+                break;
+            }
+        }
+    }
 
     // Exponential distribution to represent common values passed to combination
     uint8_t* arr1 = (uint8_t*)malloc(n*sizeof(uint8_t));
@@ -78,18 +90,6 @@ int main() {
         double random = 0x0F*-log((double)rand()/RAND_MAX);
         arr1[i] = random<=UINT8_MAX ? (uint8_t)random : UINT8_MAX;
         arr2[i] = rand()%(arr1[i]+1);
-    }
-
-    // For uint64_t, limit of combination accuracy
-    for (int n = 0; n < 256; n++) {
-        for (int k = 0; k < 256; k++) {
-            uint64_t a = combination_product(n, k);
-            uint64_t b = combination_pascals(n, k);
-            if (a != b) {
-                printf("%d\t%d\t%llu\t%llu\n", n, k, b, a);
-                break;
-            }
-        }
     }
 
     // Product is faster

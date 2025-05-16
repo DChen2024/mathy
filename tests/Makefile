@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS = -std=c99 -Wall -Wextra -O2 -s
+CFLAGS = -std=c99 -Wall -Wextra -O2
 CPPFLAGS = -I$(INC_DIR)
-LDFLAGS = -L$(OUT_DIR)
+LDFLAGS = -L$(OUT_DIR) -s
 LDLIBS = -lmathy
 
 INC_DIR = ../mathy

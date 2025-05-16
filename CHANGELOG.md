@@ -1,7 +1,22 @@
 # Changelog
 
+- [Version 1.1.1](#111-2025-xx-xx)
 - [Version 1.1.0](#110-2025-01-01)
+- [Version 1.0.1](#101-2024-11-05)
 - [Version 1.0.0](#100-2024-11-01)
+
+## 1.1.1 (2025-xx-xx)
+
+This release includes minor bug fixes and improvements.
+
+### Fixed
+
+- **Compilation error**: Resolve issue where building the library would fail on
+32-bit platforms and certain 64-bit platforms when using MSVC.
+
+- **Inaccurate result**: Resolve issue where `mathy_isqrt` could return an
+inaccurate value on platforms that do not support extended precision
+floating-point.
 
 ## 1.1.0 (2025-01-01)
 
@@ -10,9 +25,10 @@ changes.
 
 ### Added
 
-- **Statistical analysis**: Introduce statistics analysis functions.
+- **Statistical analysis**: Introduce a variety of statistics analysis
+functions.
 
-- **Examples**: Create examples to demonstrate usge of the library.
+- **Examples**: Create examples to demonstrate usage of the library.
 
 ### Changed
 
@@ -20,26 +36,32 @@ changes.
 collision and renamed some functions.
 
 - **Version encoding**: Replace version encoding as a constant with version
-encoding as a preprocessor macro.
+encoding as preprocessor macros.
 
-- **Documentation revisions**: Modify documentation and changelog formatting
-and provide more detail on the properties of statistics functions.
-
-- **Increased accuracy**: Enhance the accuracy of `mathy_stats_binom_pdf` and
-`mathy_stats_binom_cdf` for large values of `n`.
-
-### Fixed
-
-- **Division by zero**: Resolve issue where `mathy_isqrt` and `mathy_icbrt`
-could result in undefined behavior due to possible division by zero.
-
-- **Output range**: Resolve issue where `mathy_stats_binom_cdf` could return
-a value greater than 1 due to intermediate rounding.
+- **Documentation revisions**: Modify changelog formatting and documentation
+to provide additional details.
 
 ### Removed
 
 - **Inconsistent features**: Discontinue `mathy_prime` and `mathy_quadratic`
 as they do not align with the overall design of the library.
+
+## 1.0.1 (2024-11-05)
+
+This release includes minor bug fixes and improvements.
+
+### Changed
+
+- **Edge case handling**: Rework `binom_pdf` and `binom_cdf` to correctly
+handle large values of `n`.
+
+### Fixed
+
+- **Undefined behavior**: Resolve issue where `isqrt` and `icbrt` could result
+in undefined behavior due to possible division by zero.
+
+- **Invalid result**: Resolve issue where `binom_cdf` could return a value
+greater than 1 due to intermediate rounding.
 
 ## 1.0.0 (2024-11-01)
 

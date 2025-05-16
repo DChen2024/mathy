@@ -1,8 +1,47 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <math.h>
 #include <time.h>
+
+#ifdef _MSC_VER
+#include <intrin.h> /* _BitScanForward */
+#endif
+
+#define abs(n) ((n)<0 ? -(n) : (n))
+#define min(a,b) ((b)<(a) ? (b) : (a))
+
+int8_t bsf(uint64_t n) {
+#if __GNUC__ /* GCC or Clang */
+    // Warning: undefined if (n == 0)
+    // assert(x != 0);
+    return (int8_t)__builtin_ctzll(n);
+#elif _MSC_VER_ /* MSVC */
+    uint32_t i;
+#if _WIN64 /* 64-bit */
+    _BitScanForward64((unsigned long*)&i, n);
+    return (int8_t)i;
+#else /* 32-bit */
+    if ((uint32_t)n) {
+        _BitScanForward((unsigned long*)&i, n);
+        return (int8_t)i;
+    }
+    else {
+        _BitScanForward((unsigned long*)&i, n>>32);
+        return (int8_t)(i+32);
+    }
+#endif /* Word size */
+#else /* Not GCC, Clang, or MSVC */
+    // Warning: non-terminating loop if (n == 0)
+    // assert(x != 0);
+    int8_t x = 0;
+    for (; (n&1) == 0; x++) {
+        n >>= 1;
+    }
+    return x;
+#endif /* Compiler */
+}
 
 // Euclid algorithm
 intmax_t gcd_euclid(intmax_t a, intmax_t b) {
@@ -14,33 +53,26 @@ intmax_t gcd_euclid(intmax_t a, intmax_t b) {
     return a<0 ? -a : a; // return abs(a)
 }
 
-// Steins algorithm
-intmax_t gcd_steins(intmax_t a, intmax_t b) {
-    if (a < 0)
-        a = -a;
-    if (b < 0)
-        b = -b;
+// Binary algorithm
+intmax_t gcd_binary(intmax_t a, intmax_t b) {
+    a = abs(a), b = abs(b);
     if (a == 0)
         return b;
     if (b == 0)
         return a;
-    int8_t k = 0;
-    while (((a | b) & 1) == 0) {
-        a >>= 1;
-        b >>= 1;
-        k++;
-    }
-    while ((a & 1) == 0)
-        a >>= 1;
-    while (b != 0) {
-        while ((b & 1) == 0)
-            b >>= 1;
+    int8_t x = bsf(a), y = bsf(b);
+    int8_t k = min(x, y);
+    a >>= x, b >>= y;
+    while (1) {
         if (a > b) {
             intmax_t temp = b;
             b = a;
             a = temp;
         }
         b -= a;
+        if (b == 0)
+            break;
+        b >>= bsf(b);
     }
     return a << k;
 }
@@ -58,13 +90,13 @@ int main() {
     if (arr1 == NULL || arr2 == NULL)
         return 0;
     for (int i = 0; i < n; i++) {
-        double random = INTMAX_MAX/2*-log((double)rand()/RAND_MAX);
-        arr1[i] = random<=INTMAX_MAX ? (intmax_t)random : INT64_MAX;
-        random = INTMAX_MAX/2*-log((double)rand()/RAND_MAX);
-        arr2[i] = random<=INTMAX_MAX ? (intmax_t)random : INT64_MAX;
+        double random = INT_MAX*-log((double)rand()/RAND_MAX);
+        arr1[i] = random<=INTMAX_MAX ? (intmax_t)random : INTMAX_MAX;
+        random = INT_MAX*-log((double)rand()/RAND_MAX);
+        arr2[i] = random<=INTMAX_MAX ? (intmax_t)random : INTMAX_MAX;
     }
 
-    // Euclid algorithm is faster than Steins algorithm
+    // Euclid algorithm is slightly faster than binary algorithm
     start = clock();
     for (int i = 0; i < n; i++)
         x = gcd_euclid(arr1[i], arr2[i]);
@@ -72,10 +104,10 @@ int main() {
     duration = (double)(end-start)/CLOCKS_PER_SEC;
     printf("Euclid gcd took %f seconds\n", duration);
 
-    // Steins algorithm is slower than Euclid algorithm
+    // Binary algorithm is slightly slower than Euclid algorithm
     start = clock();
     for (int i = 0; i < n; i++)
-        x = gcd_steins(arr1[i], arr2[i]);
+        x = gcd_binary(arr1[i], arr2[i]);
     end = clock();
     duration = (double)(end-start)/CLOCKS_PER_SEC;
     printf("Binary gcd took %f seconds\n", duration);

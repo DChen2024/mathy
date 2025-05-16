@@ -18,9 +18,10 @@ Intended to be a fun pet project. :sweat_smile:
 
 ## Requirements
 
-Using Mathy requires the following installed software:
+Mathy requires the following:
 
-- C compiler that supports at least C99
+- C compiler that supports C99 or later
+- 32-bit or 64-bit system
 
 ## Documentation
 

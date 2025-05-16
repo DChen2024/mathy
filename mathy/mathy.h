@@ -3,10 +3,10 @@
 
 #define MATHY_VERSION_MAJOR 1
 #define MATHY_VERSION_MINOR 1
-#define MATHY_VERSION_PATCH 0
+#define MATHY_VERSION_PATCH 1
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ < 199901L
-#error "mathy requires at least C99"
+#error "mathy requires C99 or later"
 #endif
 
 #include <stdint.h>
@@ -418,4 +418,4 @@ MATHY_API double mathy_stats_norm_ppf(double p, double mu, double sigma);
 #undef MATHY_API
 #endif
 
-#endif // MATHY_H
+#endif /* MATHY_H */

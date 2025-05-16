@@ -8,7 +8,7 @@ __uint128_t factorial(uint8_t n) {
         prod *= i;
     return prod;
 }
-#endif
+#endif /* __GNUC__ */
 
 int main() {
 #ifdef __GNUC__
@@ -20,7 +20,7 @@ int main() {
             break;
         }
     }
-#endif
+#endif /* __GNUC__ */
 
     return 0;
 }

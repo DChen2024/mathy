@@ -1,21 +1,42 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <float.h>
+#include <inttypes.h>
 #include <math.h>
 #include <time.h>
 
 #ifdef _MSC_VER
-#include <intrin.h>
+#include <intrin.h> /* _BitScanReverse */
 #endif
 
 int8_t ilog2(uint64_t n) {
+    if (n == 0)
+        return -1;
 #if __GNUC__ /* GCC or Clang */
-    return __builtin_clzll(n)^0x3F;
+    return (int8_t)__builtin_clzll(n)^0x3F;
 #elif _MSC_VER /* MSVC */
-    return __lzcnt64(n)^0x3F;
-#else
-    #error "Compile using GCC, Clang, or MSVC"
-#endif
+    uint32_t i;
+#if _WIN64 /* 64-bit */
+    _BitScanReverse64((unsigned long*)&i, n);
+    return (int8_t)i;
+#else _WIN32 /* 32-bit */
+    if (n >> 32) {
+        _BitScanReverse((unsigned long*)&i, n>>32);
+        return (int8_t)(i+32);
+    }
+    else {
+        _BitScanReverse((unsigned long*)&i, n);
+        return (int8_t)i;
+    }
+#endif /* Word size */
+#else /* Not GCC, Clang, or MSVC */
+    int8_t x = 0;
+    for (uint8_t i = 32; i; i >>= 1)
+        if (n >> i)
+            n >>= i, x |= i;
+    return x;
+#endif /* Compiler */
 }
 
 // Standard library function isqrtf
@@ -28,17 +49,17 @@ uint32_t isqrt_binaryd(uint64_t n) {
     return (uint32_t)sqrt(n);
 }
 
+#if LDBL_MANT_DIG >= 64 /* long double */
 // Standard library function isqrtl
 uint32_t isqrt_binaryl(uint64_t n) {
     return (uint32_t)sqrtl(n);
 }
+#endif /* Extended precision floating-point */
 
 // Find the result bit-by-bit
 uint32_t isqrt_bitwise(uint64_t n) {
-    if (n == 0)
-        return 0;
     uint32_t x = 0;
-    for (uint32_t i = (uint32_t)1<<(ilog2(n)/2); i; i >>= 1) {
+    for (uint32_t i = UINT32_C(1)<<(ilog2(n)/2); i; i >>= 1) {
         uint64_t temp = x|i;
         if (temp*temp <= n)
             x = temp;
@@ -50,7 +71,7 @@ uint32_t isqrt_bitwise(uint64_t n) {
 uint32_t isqrt_newtons(uint64_t n) {
     if (n == 0)
         return 0;
-    uint64_t x0 = (uint64_t)1<<(ilog2(n)/2+1);
+    uint64_t x0 = UINT64_C(1)<<(ilog2(n)/2+1);
     uint64_t x1 = (x0+n/x0)/2;
     while (x1 < x0) {
         x0 = x1;
@@ -61,41 +82,31 @@ uint32_t isqrt_newtons(uint64_t n) {
 
 // CPython implementation
 uint32_t isqrt_cpython(uint64_t n) {
-    // https://github.com/python/cpython/blob/main/Modules/mathmodule.c
-    if (n == 0)
-        return 0;
-    const int8_t c = ilog2(n)/2;
-    if (c == 0)
-        return 1;
+    // https://github.com/mdickinson/snippets/blob/main/papers/isqrt/isqrt.pdf
     uint64_t a = 1;
+    const int8_t c = ilog2(n)/2;
     for (int8_t s = ilog2(c), d = 0, e; s >= 0; s--) {
         e = d;
         d = c>>s;
-        a = (a<<d-e-1)+(n>>2*c-d-e+1)/a;
+        a = (a<<(d-e-1))+(n>>(2*c-d-e+1))/a;
     }
-    return a>>32 ? UINT32_MAX : (uint32_t)(a-(a*a>n));
+    return (uint32_t)(a-(a*a-1>=n));
 }
 
 // Hybrid implementation for accuracy
 uint32_t isqrt_binary2(uint64_t n) {
-    if (n < 16785407)
+    if (n < (1ULL<<FLT_MANT_DIG/2*2)+(1ULL<<(FLT_MANT_DIG+2)/2)-1)
         return (uint32_t)sqrtf(n);
-    if (n < 4503599761588224)
+    if (n < (1ULL<<DBL_MANT_DIG/2*2)+(1ULL<<(DBL_MANT_DIG+2)/2))
         return (uint32_t)sqrt(n);
-#if __GNUC__ /* GCC or Clang */
+#if LDBL_MANT_DIG >= 64 /* long double */
     return (uint32_t)sqrtl(n);
-#else /* MSVC */
-    uint64_t a = 1;
-    for (int8_t c = ilog2(n)/2, s = ilog2(c), d = 0, e; s >= 0; s--) {
-        e = d;
-        d = c>>s;
-        a = (a<<d-e-1)+(n>>2*c-d-e+1)/a;
-    }
-    return a>>32 ? UINT32_MAX : (uint32_t)(a-(a*a>n));
-#endif
+#else /* double */
+    return isqrt_cpython(n);
+#endif /* Extended precision floating-point */
 }
 
-int main() {
+int main(int argc, char **argv) {
     srand(time(NULL));
     clock_t start, end;
     double duration;
@@ -103,30 +114,34 @@ int main() {
     volatile uint32_t x;
 
     // For IEEE-754, limit of sqrtf accuracy is n=16785407
-    for (uint32_t i = 1; i != 0; i++) {
+    // This is (1<<24)+(1<<13)-1
+    for (uint32_t i = 1; i <= UINT32_MAX; i++) {
         if (isqrt_binaryf(i) != isqrt_cpython(i)) {
-            printf("For sqrtf n=%u\n", i);
+            printf("For sqrtf n=%"PRIu32"\n", i);
             break;
         }
     }
 
     // For IEEE-754, limit of sqrt accuracy is n=4503599761588224
-    for (uint64_t i = 1; i != 0; i++) {
+    // This is (1<<52)+(1<<27)
+    for (uint64_t i = 1; i <= UINT32_MAX; i++) {
         if (isqrt_binaryd(i*i-1) != isqrt_cpython(i*i-1)) {
-            printf("For sqrtd n=%llu\n", i*i-1);
+            printf("For sqrtd n=%"PRIu64"\n", i*i-1);
             break;
         }
     }
 
-#if __GNUC__
+    if (argc > 1) { // Only run if additional command line argument is given
+#if LDBL_MANT_DIG >= 64 /* long double */
     // For uint64_t, (uint32_t)sqrtl is always accurate
-    for (uint64_t i = 1; i != (uint64_t)1<<32; i++) {
+    for (uint64_t i = 1; i <= UINT32_MAX; i++) {
         if (isqrt_binaryl(i*i-1) != isqrt_cpython(i*i-1)) {
-            printf("For sqrtl n=%llu\n", i*i-1);
+            printf("For sqrtl n=%"PRIu64"\n", i*i-1);
             break;
         }
     }
-#endif
+#endif /* Extended precision floating-point */
+    }
 
     // Exponential distribution to represent common values passed to isqrt
     uint64_t* arr = (uint64_t*)malloc(n*sizeof(uint64_t));
@@ -153,6 +168,7 @@ int main() {
     duration = (double)(end-start)/CLOCKS_PER_SEC;
     printf("Binaryd isqrt took %f seconds\n", duration);
 
+#if LDBL_MANT_DIG >= 64 /* long double */
     // sqrtl slower than sqrtf and sqrt
     start = clock();
     for (int i = 0; i < n; i++)
@@ -160,6 +176,7 @@ int main() {
     end = clock();
     duration = (double)(end-start)/CLOCKS_PER_SEC;
     printf("Binaryl isqrt took %f seconds\n", duration);
+#endif /* Extended precision floating-point */
 
     // Bitwise is the slowest
     start = clock();

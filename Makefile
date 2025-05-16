@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS = -std=c99 -Wall -Wextra -O2 -s
+CFLAGS = -std=c99 -Wall -Wextra -O2
 CPPFLAGS = -DMATHY_EXPORTS
-LDFLAGS = -shared
+LDFLAGS = -shared -s
 
 SRC_DIR = mathy
 OBJ_DIR = build
@@ -17,7 +17,7 @@ $(OBJ_DIR)/%.obj: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
 
 $(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
 	$(RM) $(OBJ) $(TARGET)
