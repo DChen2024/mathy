@@ -1,8 +1,8 @@
 # Contributing
 
-Thank you for your interest in contributing to the library. We
-welcome any form of contribution. Besides writing and maintaining code,
-you can also improve documentation, report a bug, or request a feature.
+Thank you for your interest in contributing to this library. We welcome
+any form of contribution. Besides writing and maintaining code, you can
+also help improve documentation, report a bug, or request a feature.
 Please be sure to help us maintain a welcoming and friendly environment.
 
 If you have any questions or comments, feel free to reach out to

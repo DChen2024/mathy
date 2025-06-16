@@ -11,16 +11,17 @@
 This library implements some basic math utility functions not part of the
 C/C++ standard library.
 
-Made this to become more familiar with GitHub. And with creating a library
+Made this to become more familiar with GitHub. And with creating a project
 in C.
 
 Intended to be a fun pet project. :sweat_smile:
 
 ## Requirements
 
-Using Mathy requires the following installed software:
+Mathy requires the following:
 
-- C compiler that supports at least C99
+- C compiler that supports C99 or later
+- 32-bit or 64-bit system
 
 ## Documentation
 
