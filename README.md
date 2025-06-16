@@ -11,7 +11,7 @@
 This library implements some basic math utility functions not part of the
 C/C++ standard library.
 
-Made this to become more familiar with GitHub. And with creating a library
+Made this to become more familiar with GitHub. And with creating a project
 in C.
 
 Intended to be a fun pet project. :sweat_smile:
